@@ -1,16 +1,28 @@
-ARCH            ?= arm64
-KERNEL_SRC_DIR  ?= /lib/modules/$(shell uname -r)/build
+obj-m	:= memalloc.o
 
-ifeq ($(shell uname -m | sed -e s/arm64.*/arm64/),arm64)
-else
-	CROSS_COMPILE  ?= aarch64-linux-gnu-
-endif
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+PWD       := $(shell pwd)
 
-obj-m := $(MODULE).o
+all: modules
 
-all:
-	make -C $(KERNEL_SRC_DIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(PWD) modules
+install: modules_install udev_install
+
+modules:
+	@echo
+	@echo "Building kernel module"
+	$(MAKE) -C $(KERNELDIR) M=$(PWD)
+
+modules_install: modules
+	@echo
+	@echo "Installing kernel module"
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
+
+udev_install: modules
+	@echo
+	@echo "Installing rules"
+	@/bin/install -v -b 99-tipcie.rules /etc/udev/rules.d/
+	@echo
+	@echo "Reboot, or restart udev, to complete udev rule installation"
 
 clean:
-	make -C $(KERNEL_SRC_DIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(PWD) clean
-
+	@rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions
