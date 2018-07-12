@@ -207,6 +207,7 @@ reserve_buffer(ioctl_arg_t * ioctl_arg)
       if (vaddr == NULL)
 	{
 	  printk(KERN_ERR "ERROR: Allocation failure (vaddr %p).\n", vaddr);
+	  buffer_info[id].active = 0;
 	  return (-1);
 	}
       //printk(KERN_ERR "DEBUG: Allocated buffer %d (paddr = 0x%p, k-vaddr = 0x%x).\n", id, paddr, vaddr);
@@ -232,7 +233,7 @@ release_buffer(ioctl_arg_t * ioctl_arg)
 {
   int id = ioctl_arg->buffer_id;
 
-  if (id > MEMALLOC_BUFFER_MAX_NUMBER)
+  if ((id > MEMALLOC_BUFFER_MAX_NUMBER) || (id < 0))
     {
       printk(KERN_ERR "ERROR: Wrong bufferID %d.\n", id);
       return (-1);
